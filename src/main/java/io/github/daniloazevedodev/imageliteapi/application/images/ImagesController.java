@@ -2,18 +2,17 @@ package io.github.daniloazevedodev.imageliteapi.application.images;
 
 import io.github.daniloazevedodev.imageliteapi.domain.ImageService;
 import io.github.daniloazevedodev.imageliteapi.domain.entity.Image;
-import io.github.daniloazevedodev.imageliteapi.domain.enums.ImageExtension;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.MediaType;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.List;
 
 @Slf4j
@@ -23,27 +22,43 @@ import java.util.List;
 public class ImagesController {
 
     private final ImageService imageService;
+    private final ImageMapper imageMapper;
 
     @PostMapping
-    public ResponseEntity save(@RequestParam("file") MultipartFile file,
+    public ResponseEntity<Void> save(@RequestParam("file") MultipartFile file,
                                @RequestParam("name") String name,
                                @RequestParam("tags") List<String> tags) throws IOException {
 
-        log.info("File: {}, size: {}", file.getOriginalFilename(), file.getSize());
-        log.info("Content Type: {}", file.getContentType());
-        log.info("Media Type: {}", MediaType.valueOf(file.getContentType()));
+        Image image = imageMapper.mapToImage(file, name, tags);
+        Image saveImage = imageService.save(image);
+        URI imageUri = buildImageURL(saveImage);
 
-        Image image = Image.builder()
-                .name(name)
-                .tags(String.join(",", tags))
-                .size(file.getSize())
-                .extension(ImageExtension.valueOf(MediaType.valueOf(file.getContentType())))
-                .file(file.getBytes())
-                .build();
+        return ResponseEntity.created(imageUri).build();
+    }
 
-        imageService.save(image);
+    @GetMapping("{id}")
+    public ResponseEntity<byte[]> getImage(@PathVariable String id) {
 
-        return ResponseEntity.ok().build();
+        var possibleImage = imageService.getById(id);
+
+        if (possibleImage.isEmpty())
+            return ResponseEntity.notFound().build();
+
+        var image = possibleImage.get();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(image.getExtension().getMediaType());
+        headers.setContentLength(image.getSize());
+        headers.setContentDispositionFormData("inline; filename=\"" + image.getFileName() +  "\"", image.getFileName());
+
+        return new ResponseEntity<>(image.getFile(), headers, HttpStatus.OK);
+    }
+
+    private URI buildImageURL(Image image) {
+        String imagePath = String.format("/%s", image.getId());
+        return ServletUriComponentsBuilder.fromCurrentRequest()
+                .path(imagePath)
+                .build()
+                .toUri();
     }
 
 }

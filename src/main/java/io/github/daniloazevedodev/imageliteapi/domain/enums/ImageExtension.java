@@ -1,9 +1,11 @@
 package io.github.daniloazevedodev.imageliteapi.domain.enums;
 
+import lombok.Getter;
 import org.springframework.http.MediaType;
 
 import java.util.Arrays;
 
+@Getter
 public enum ImageExtension {
 
     PNG(MediaType.IMAGE_PNG),

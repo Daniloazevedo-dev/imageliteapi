@@ -18,10 +18,17 @@ public enum ImageExtension {
         this.mediaType = mediaType;
     }
 
-//    public static ImageExtension valueOf(MediaType mediaType) {
-//        return Arrays.stream(ImageExtension.values())
-//                .filter(ie -> ie.mediaType.equals(mediaType))
-//                .findFirst()
-//                .orElse(null);
-//    }
+    public static ImageExtension valueOf(MediaType mediaType) {
+        return Arrays.stream(ImageExtension.values())
+                .filter(ie -> ie.mediaType.equals(mediaType))
+                .findFirst()
+                .orElse(null);
+    }
+
+    public static ImageExtension ofName(String name) {
+        return Arrays.stream(ImageExtension.values())
+                .filter(ie -> ie.name().equalsIgnoreCase(name))
+                .findFirst()
+                .orElse(null);
+    }
 }

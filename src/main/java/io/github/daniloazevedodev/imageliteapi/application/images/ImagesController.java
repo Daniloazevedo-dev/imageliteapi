@@ -57,7 +57,8 @@ public class ImagesController {
 
     private URI buildImageURL(Image image) {
         String imagePath = String.format("/%s", image.getId());
-        return ServletUriComponentsBuilder.fromCurrentRequest()
+        return ServletUriComponentsBuilder
+                .fromCurrentRequestUri()
                 .path(imagePath)
                 .build()
                 .toUri();
@@ -66,7 +67,7 @@ public class ImagesController {
     @GetMapping
     public ResponseEntity<List<ImageDTO>> search(@RequestParam(value = "extension", required = false, defaultValue = "") String extension,
                               @RequestParam(value = "query", required = false) String query) {
-        var result =  imageService.search(ImageExtension.valueOf(extension), query);
+        var result =  imageService.search(ImageExtension.ofName(extension), query);
         var images = result.stream().map(image -> {
             var url = buildImageURL(image);
             return imageMapper.imageToDTO(image, url.toString());
@@ -74,5 +75,7 @@ public class ImagesController {
 
         return ResponseEntity.ok(images);
     }
+
+
 
 }

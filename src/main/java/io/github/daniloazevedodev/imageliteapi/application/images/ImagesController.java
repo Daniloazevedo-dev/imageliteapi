@@ -75,7 +75,4 @@ public class ImagesController {
 
         return ResponseEntity.ok(images);
     }
-
-
-
 }
